@@ -1,46 +1,49 @@
 package org.mengyun.tcctransaction;
 
+import java.io.Serializable;
+import java.lang.reflect.Method;
+
 import org.mengyun.tcctransaction.api.TransactionContext;
 import org.mengyun.tcctransaction.api.TransactionContextEditor;
 import org.mengyun.tcctransaction.support.FactoryBuilder;
 import org.mengyun.tcctransaction.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
-import java.lang.reflect.Method;
+import com.alibaba.fastjson.JSON;
 
 /**
  * Created by changmingxie on 10/30/15.
  */
 public class Terminator implements Serializable {
+	static final Logger logger = LoggerFactory.getLogger(Terminator.class);
+	private static final long serialVersionUID = -164958655471605778L;
 
-    private static final long serialVersionUID = -164958655471605778L;
+	public Terminator() {
 
+	}
 
-    public Terminator() {
+	public Object invoke(TransactionContext transactionContext, InvocationContext invocationContext, Class<? extends TransactionContextEditor> transactionContextEditorClass) {
+		logger.info("invoke context:{}, class:{}", invocationContext.getMethodName() + " " + JSON.toJSON(transactionContext) + " " + JSON.toJSON(invocationContext),
+				transactionContextEditorClass.getName());
+		if (StringUtils.isNotEmpty(invocationContext.getMethodName())) {
 
-    }
+			try {
 
-    public Object invoke(TransactionContext transactionContext, InvocationContext invocationContext, Class<? extends TransactionContextEditor> transactionContextEditorClass) {
+				Object target = FactoryBuilder.factoryOf(invocationContext.getTargetClass()).getInstance();
 
+				Method method = null;
 
-        if (StringUtils.isNotEmpty(invocationContext.getMethodName())) {
+				method = target.getClass().getMethod(invocationContext.getMethodName(), invocationContext.getParameterTypes());
 
-            try {
+				FactoryBuilder.factoryOf(transactionContextEditorClass).getInstance().set(transactionContext, target, method, invocationContext.getArgs());
 
-                Object target = FactoryBuilder.factoryOf(invocationContext.getTargetClass()).getInstance();
+				return method.invoke(target, invocationContext.getArgs());
 
-                Method method = null;
-
-                method = target.getClass().getMethod(invocationContext.getMethodName(), invocationContext.getParameterTypes());
-
-                FactoryBuilder.factoryOf(transactionContextEditorClass).getInstance().set(transactionContext, target, method, invocationContext.getArgs());
-
-                return method.invoke(target, invocationContext.getArgs());
-
-            } catch (Exception e) {
-                throw new SystemException(e);
-            }
-        }
-        return null;
-    }
+			} catch (Exception e) {
+				throw new SystemException(e);
+			}
+		}
+		return null;
+	}
 }

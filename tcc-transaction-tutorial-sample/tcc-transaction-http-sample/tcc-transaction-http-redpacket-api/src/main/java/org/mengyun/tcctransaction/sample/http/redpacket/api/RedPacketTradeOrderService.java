@@ -8,5 +8,5 @@ import org.mengyun.tcctransaction.sample.http.redpacket.api.dto.RedPacketTradeOr
  */
 public interface RedPacketTradeOrderService {
 
-    public String record(TransactionContext transactionContext, RedPacketTradeOrderDto tradeOrderDto);
+	public String record(TransactionContext transactionContext, RedPacketTradeOrderDto tradeOrderDto);
 }

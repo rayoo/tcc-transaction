@@ -1,99 +1,144 @@
 package org.mengyun.tcctransaction.recover;
 
-import com.alibaba.fastjson.JSON;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.log4j.Logger;
 import org.mengyun.tcctransaction.OptimisticLockException;
 import org.mengyun.tcctransaction.Transaction;
 import org.mengyun.tcctransaction.TransactionRepository;
 import org.mengyun.tcctransaction.api.TransactionStatus;
 import org.mengyun.tcctransaction.common.TransactionType;
+import org.mengyun.tcctransaction.repository.helper.ZooKeeperHelper;
 import org.mengyun.tcctransaction.support.TransactionConfigurator;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import com.alibaba.fastjson.JSON;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Created by changmingxie on 11/10/15.
  */
 public class TransactionRecovery {
 
-    static final Logger logger = Logger.getLogger(TransactionRecovery.class.getSimpleName());
+	static final Logger logger = Logger.getLogger(TransactionRecovery.class.getSimpleName());
 
-    private TransactionConfigurator transactionConfigurator;
+	private TransactionConfigurator transactionConfigurator;
+	private static final ExecutorService recoveryExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2,
+			new ThreadFactoryBuilder().setDaemon(true).setNameFormat("TransactionRecoveryExecutor-%d").build());
 
-    public void startRecover() {
+	public void startRecover() {
+		InterProcessMutex lock = null;
+		try {
+			try {
+				if (StringUtils.isNotBlank(transactionConfigurator.getRecoverConfig().getZookeeperNamespace())) {
+					String[] zkServerNamespace = transactionConfigurator.getRecoverConfig().getZookeeperNamespace().split("/");
+					lock = new InterProcessMutex(ZooKeeperHelper.getZKClient(zkServerNamespace[0], "TCC/" + zkServerNamespace[1], false), "/TransactionRecovery");
+					if (!lock.acquire(800, TimeUnit.MILLISECONDS)) { // n秒内没有获取到锁, 就放弃
+						logger.info("concurrent execution, exit.");
+						return;
+					}
+				}
+			} catch (Exception e) {
+				logger.error("zookeeper 同步锁异常", e);
+			}
+			List<Transaction> transactions = loadErrorTransactions();
+			recoverErrorTransactions(transactions);
+		} finally {
+			try {
+				if (null != lock) {
+					lock.release();
+				}
+			} catch (Exception e2) {
+				logger.error("", e2);
+			}
+		}
 
-        List<Transaction> transactions = loadErrorTransactions();
+	}
 
-        recoverErrorTransactions(transactions);
-    }
+	private List<Transaction> loadErrorTransactions() {
 
-    private List<Transaction> loadErrorTransactions() {
+		long currentTimeInMillis = Calendar.getInstance().getTimeInMillis();
 
+		TransactionRepository transactionRepository = transactionConfigurator.getTransactionRepository();
+		RecoverConfig recoverConfig = transactionConfigurator.getRecoverConfig();
 
-        long currentTimeInMillis = Calendar.getInstance().getTimeInMillis();
+		List<Transaction> transactions = transactionRepository.findAllUnmodifiedSince(new Date(currentTimeInMillis - recoverConfig.getRecoverDuration() * 1000));
 
-        TransactionRepository transactionRepository = transactionConfigurator.getTransactionRepository();
-        RecoverConfig recoverConfig = transactionConfigurator.getRecoverConfig();
+		return transactions;
+	}
 
-        List<Transaction> transactions = transactionRepository.findAllUnmodifiedSince(new Date(currentTimeInMillis - recoverConfig.getRecoverDuration() * 1000));
+	private void recoverErrorTransactions(List<Transaction> transactions) {
+		final CountDownLatch countDownLatch = new CountDownLatch(transactions.size());
 
-        return transactions;
-    }
+		for (final Transaction transaction : transactions) {
+			recoveryExecutor.execute(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						if (transaction.getRetriedCount() > transactionConfigurator.getRecoverConfig().getMaxRetryCount()) {
 
-    private void recoverErrorTransactions(List<Transaction> transactions) {
+							logger.error(String.format("recover failed with max retry count,will not try again. txid:%s, status:%s,retried count:%d,transaction content:%s",
+									transaction.getXid(), transaction.getStatus().getId(), transaction.getRetriedCount(), JSON.toJSONString(transaction)));
+							return;
+						}
 
+						if (transaction.getTransactionType().equals(TransactionType.BRANCH) && (transaction.getCreateTime().getTime()
+								+ transactionConfigurator.getRecoverConfig().getMaxRetryCount() * transactionConfigurator.getRecoverConfig().getRecoverDuration() * 1000 > System
+										.currentTimeMillis())) {
+							return;
+						}
 
-        for (Transaction transaction : transactions) {
+						try {
+							transaction.addRetriedCount();
 
-            if (transaction.getRetriedCount() > transactionConfigurator.getRecoverConfig().getMaxRetryCount()) {
+							if (transaction.getStatus().equals(TransactionStatus.CONFIRMING)) {
 
-                logger.error(String.format("recover failed with max retry count,will not try again. txid:%s, status:%s,retried count:%d,transaction content:%s", transaction.getXid(), transaction.getStatus().getId(), transaction.getRetriedCount(), JSON.toJSONString(transaction)));
-                continue;
-            }
+								transaction.changeStatus(TransactionStatus.CONFIRMING);
+								transactionConfigurator.getTransactionRepository().update(transaction);
+								transaction.commit();
+								transactionConfigurator.getTransactionRepository().delete(transaction);
 
-            if (transaction.getTransactionType().equals(TransactionType.BRANCH)
-                    && (transaction.getCreateTime().getTime() +
-                    transactionConfigurator.getRecoverConfig().getMaxRetryCount() *
-                            transactionConfigurator.getRecoverConfig().getRecoverDuration() * 1000
-                    > System.currentTimeMillis())) {
-                continue;
-            }
-            
-            try {
-                transaction.addRetriedCount();
+							} else if (transaction.getStatus().equals(TransactionStatus.CANCELLING) || transaction.getTransactionType().equals(TransactionType.ROOT)) {
 
-                if (transaction.getStatus().equals(TransactionStatus.CONFIRMING)) {
+								transaction.changeStatus(TransactionStatus.CANCELLING);
+								transactionConfigurator.getTransactionRepository().update(transaction);
+								transaction.rollback();
+								transactionConfigurator.getTransactionRepository().delete(transaction);
+							}
 
-                    transaction.changeStatus(TransactionStatus.CONFIRMING);
-                    transactionConfigurator.getTransactionRepository().update(transaction);
-                    transaction.commit();
-                    transactionConfigurator.getTransactionRepository().delete(transaction);
+						} catch (Throwable throwable) {
 
-                } else if (transaction.getStatus().equals(TransactionStatus.CANCELLING)
-                        || transaction.getTransactionType().equals(TransactionType.ROOT)) {
+							if (throwable instanceof OptimisticLockException || ExceptionUtils.getRootCause(throwable) instanceof OptimisticLockException) {
+								logger.warn(String.format("optimisticLockException happened while recover. txid:%s, status:%s,retried count:%d,transaction content:%s",
+										transaction.getXid(), transaction.getStatus().getId(), transaction.getRetriedCount(), JSON.toJSONString(transaction)), throwable);
+							} else {
+								logger.error(String.format("recover failed, txid:%s, status:%s,retried count:%d,transaction content:%s", transaction.getXid(),
+										transaction.getStatus().getId(), transaction.getRetriedCount(), JSON.toJSONString(transaction)), throwable);
+							}
+						}
+					} finally {
+						countDownLatch.countDown();
+					}
 
-                    transaction.changeStatus(TransactionStatus.CANCELLING);
-                    transactionConfigurator.getTransactionRepository().update(transaction);
-                    transaction.rollback();
-                    transactionConfigurator.getTransactionRepository().delete(transaction);
-                }
+				}
+			});
+		}
+		try {
+			countDownLatch.await();
+		} catch (InterruptedException e) {
+			logger.error("", e);
+		}
+	}
 
-            } catch (Throwable throwable) {
-
-                if (throwable instanceof OptimisticLockException
-                        || ExceptionUtils.getRootCause(throwable) instanceof OptimisticLockException) {
-                    logger.warn(String.format("optimisticLockException happened while recover. txid:%s, status:%s,retried count:%d,transaction content:%s", transaction.getXid(), transaction.getStatus().getId(), transaction.getRetriedCount(), JSON.toJSONString(transaction)), throwable);
-                } else {
-                    logger.error(String.format("recover failed, txid:%s, status:%s,retried count:%d,transaction content:%s", transaction.getXid(), transaction.getStatus().getId(), transaction.getRetriedCount(), JSON.toJSONString(transaction)), throwable);
-                }
-            }
-        }
-    }
-
-    public void setTransactionConfigurator(TransactionConfigurator transactionConfigurator) {
-        this.transactionConfigurator = transactionConfigurator;
-    }
+	public void setTransactionConfigurator(TransactionConfigurator transactionConfigurator) {
+		this.transactionConfigurator = transactionConfigurator;
+	}
 }

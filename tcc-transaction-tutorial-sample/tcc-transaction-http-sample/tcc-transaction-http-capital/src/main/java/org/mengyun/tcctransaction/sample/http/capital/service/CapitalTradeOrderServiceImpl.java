@@ -1,5 +1,7 @@
 package org.mengyun.tcctransaction.sample.http.capital.service;
 
+import java.util.Calendar;
+
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.mengyun.tcctransaction.api.Compensable;
 import org.mengyun.tcctransaction.api.TransactionContext;
@@ -10,99 +12,95 @@ import org.mengyun.tcctransaction.sample.http.capital.domain.entity.CapitalAccou
 import org.mengyun.tcctransaction.sample.http.capital.domain.entity.TradeOrder;
 import org.mengyun.tcctransaction.sample.http.capital.domain.repository.CapitalAccountRepository;
 import org.mengyun.tcctransaction.sample.http.capital.domain.repository.TradeOrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Calendar;
 
 /**
  * Created by changming.xie on 4/2/16.
  */
 public class CapitalTradeOrderServiceImpl implements CapitalTradeOrderService {
+	static final Logger logger = LoggerFactory.getLogger(CapitalTradeOrderServiceImpl.class);
+	@Autowired
+	CapitalAccountRepository capitalAccountRepository;
 
-    @Autowired
-    CapitalAccountRepository capitalAccountRepository;
+	@Autowired
+	TradeOrderRepository tradeOrderRepository;
 
-    @Autowired
-    TradeOrderRepository tradeOrderRepository;
+	@Override
+	@Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = MethodTransactionContextEditor.class)
+	@Transactional
+	public String record(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
+		logger.info(">> record CapitalTradeOrderDto try");
+		try {
+			Thread.sleep(1000l);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 
-    @Override
-    @Compensable(confirmMethod = "confirmRecord", cancelMethod = "cancelRecord", transactionContextEditor = MethodTransactionContextEditor.class)
-    @Transactional
-    public String record(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
+		System.out.println("capital try record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
-        try {
-            Thread.sleep(1000l);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+		TradeOrder tradeOrder = new TradeOrder(tradeOrderDto.getSelfUserId(), tradeOrderDto.getOppositeUserId(), tradeOrderDto.getMerchantOrderNo(), tradeOrderDto.getAmount());
 
-        System.out.println("capital try record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
+		tradeOrderRepository.insert(tradeOrder);
 
-        TradeOrder tradeOrder = new TradeOrder(
-                tradeOrderDto.getSelfUserId(),
-                tradeOrderDto.getOppositeUserId(),
-                tradeOrderDto.getMerchantOrderNo(),
-                tradeOrderDto.getAmount()
-        );
+		CapitalAccount transferFromAccount = capitalAccountRepository.findByUserId(tradeOrderDto.getSelfUserId());
 
-        tradeOrderRepository.insert(tradeOrder);
+		transferFromAccount.transferFrom(tradeOrderDto.getAmount());
 
-        CapitalAccount transferFromAccount = capitalAccountRepository.findByUserId(tradeOrderDto.getSelfUserId());
+		capitalAccountRepository.save(transferFromAccount);
+		return "success";
+	}
 
-        transferFromAccount.transferFrom(tradeOrderDto.getAmount());
+	@Transactional
+	public void confirmRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
+		logger.info(">> confirmRecord CapitalTradeOrderDto");
 
-        capitalAccountRepository.save(transferFromAccount);
-        return "success";
-    }
+		try {
+			Thread.sleep(1000l);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 
-    @Transactional
-    public void confirmRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
+		System.out.println("capital confirm record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
-        try {
-            Thread.sleep(1000l);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+		TradeOrder tradeOrder = tradeOrderRepository.findByMerchantOrderNo(tradeOrderDto.getMerchantOrderNo());
 
-        System.out.println("capital confirm record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
+		if (null != tradeOrder && "DRAFT".equals(tradeOrder.getStatus())) {
+			tradeOrder.confirm();
+			tradeOrderRepository.update(tradeOrder);
 
-        TradeOrder tradeOrder = tradeOrderRepository.findByMerchantOrderNo(tradeOrderDto.getMerchantOrderNo());
+			CapitalAccount transferToAccount = capitalAccountRepository.findByUserId(tradeOrderDto.getOppositeUserId());
 
-        if (null != tradeOrder && "DRAFT".equals(tradeOrder.getStatus())) {
-            tradeOrder.confirm();
-            tradeOrderRepository.update(tradeOrder);
+			transferToAccount.transferTo(tradeOrderDto.getAmount());
 
-            CapitalAccount transferToAccount = capitalAccountRepository.findByUserId(tradeOrderDto.getOppositeUserId());
+			capitalAccountRepository.save(transferToAccount);
+		}
+	}
 
-            transferToAccount.transferTo(tradeOrderDto.getAmount());
+	@Transactional
+	public void cancelRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
+		logger.info(">> cancelRecord CapitalTradeOrderDto");
+		try {
+			Thread.sleep(1000l);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 
-            capitalAccountRepository.save(transferToAccount);
-        }
-    }
+		System.out.println("capital cancel record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
 
-    @Transactional
-    public void cancelRecord(TransactionContext transactionContext, CapitalTradeOrderDto tradeOrderDto) {
+		TradeOrder tradeOrder = tradeOrderRepository.findByMerchantOrderNo(tradeOrderDto.getMerchantOrderNo());
 
-        try {
-            Thread.sleep(1000l);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+		if (null != tradeOrder && "DRAFT".equals(tradeOrder.getStatus())) {
+			tradeOrder.cancel();
+			tradeOrderRepository.update(tradeOrder);
 
-        System.out.println("capital cancel record called. time seq:" + DateFormatUtils.format(Calendar.getInstance(), "yyyy-MM-dd HH:mm:ss"));
+			CapitalAccount capitalAccount = capitalAccountRepository.findByUserId(tradeOrderDto.getSelfUserId());
 
-        TradeOrder tradeOrder = tradeOrderRepository.findByMerchantOrderNo(tradeOrderDto.getMerchantOrderNo());
+			capitalAccount.cancelTransfer(tradeOrderDto.getAmount());
 
-        if (null != tradeOrder && "DRAFT".equals(tradeOrder.getStatus())) {
-            tradeOrder.cancel();
-            tradeOrderRepository.update(tradeOrder);
-
-            CapitalAccount capitalAccount = capitalAccountRepository.findByUserId(tradeOrderDto.getSelfUserId());
-
-            capitalAccount.cancelTransfer(tradeOrderDto.getAmount());
-
-            capitalAccountRepository.save(capitalAccount);
-        }
-    }
+			capitalAccountRepository.save(capitalAccount);
+		}
+	}
 }

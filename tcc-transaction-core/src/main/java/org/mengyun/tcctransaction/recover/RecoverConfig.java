@@ -7,13 +7,16 @@ import java.util.Set;
  */
 public interface RecoverConfig {
 
-    public int getMaxRetryCount();
+	public int getMaxRetryCount();
 
-    public int getRecoverDuration();
+	public int getRecoverDuration();
 
-    public String getCronExpression();
+	public String getCronExpression();
 
-    public Set<Class<? extends Exception>> getDelayCancelExceptions();
+	public Set<Class<? extends Exception>> getDelayCancelExceptions();
 
-    public void setDelayCancelExceptions(Set<Class<? extends Exception>> delayRecoverExceptions);
+	public void setDelayCancelExceptions(Set<Class<? extends Exception>> delayRecoverExceptions);
+
+	public String getZookeeperNamespace();
+
 }

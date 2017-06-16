@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="httpInvokerRequestExecutor"
+          class="org.springframework.remoting.httpinvoker.CommonsHttpInvokerRequestExecutor">
+        <property name="httpClient">
+            <bean class="org.apache.commons.httpclient.HttpClient">
+                <property name="httpConnectionManager">
+                    <ref bean="multiThreadHttpConnectionManager"/>
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="multiThreadHttpConnectionManager"
+          class="org.apache.commons.httpclient.MultiThreadedHttpConnectionManager">
+        <property name="params">
+            <bean class="org.apache.commons.httpclient.params.HttpConnectionManagerParams">
+                <property name="connectionTimeout" value="2000"/>
+                <property name="maxTotalConnections" value="600"/>
+                <property name="defaultMaxConnectionsPerHost" value="512"/>
+                <property name="soTimeout" value="5000"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="userHonourService" class="org.springframework.remoting.httpinvoker.HttpInvokerProxyFactoryBean">
+        <property name="serviceUrl" value="http://localhost:8083/remoting/UserHonourService"/>
+        <property name="serviceInterface"
+                  value="com.yonyou.biza.api.UserHonourService"/>
+        <property name="httpInvokerRequestExecutor" ref="httpInvokerRequestExecutor"/>
+    </bean>
+    
+    <bean id="userCreditService" class="org.springframework.remoting.httpinvoker.HttpInvokerProxyFactoryBean">
+        <property name="serviceUrl" value="http://localhost:8084/remoting/UserCreditService"/>
+        <property name="serviceInterface"
+                  value="com.yonyou.bizb.api.UserCreditService"/>
+        <property name="httpInvokerRequestExecutor" ref="httpInvokerRequestExecutor"/>
+    </bean>
+ 
+
+</beans>

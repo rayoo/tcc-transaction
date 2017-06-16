@@ -1,8 +1,9 @@
 package org.mengyun.tcctransaction.interceptor;
 
-import com.alibaba.fastjson.JSON;
+import java.lang.reflect.Method;
+import java.util.Set;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.log4j.Logger;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.mengyun.tcctransaction.NoExistedTransactionException;
@@ -18,142 +19,140 @@ import org.mengyun.tcctransaction.support.FactoryBuilder;
 import org.mengyun.tcctransaction.utils.CompensableMethodUtils;
 import org.mengyun.tcctransaction.utils.ReflectionUtils;
 import org.mengyun.tcctransaction.utils.TransactionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
-import java.util.Set;
+import com.alibaba.fastjson.JSON;
 
 /**
  * Created by changmingxie on 10/30/15.
  */
 public class CompensableTransactionInterceptor {
 
-    static final Logger logger = Logger.getLogger(CompensableTransactionInterceptor.class.getSimpleName());
+	static final Logger logger = LoggerFactory.getLogger(CompensableTransactionInterceptor.class.getSimpleName());
 
-    private TransactionManager transactionManager;
+	private TransactionManager transactionManager;
 
-    private Set<Class<? extends Exception>> delayCancelExceptions;
+	private Set<Class<? extends Exception>> delayCancelExceptions;
 
-    public void setTransactionManager(TransactionManager transactionManager) {
-        this.transactionManager = transactionManager;
-    }
+	public void setTransactionManager(TransactionManager transactionManager) {
+		this.transactionManager = transactionManager;
+	}
 
-    public void setDelayCancelExceptions(Set<Class<? extends Exception>> delayCancelExceptions) {
-        this.delayCancelExceptions = delayCancelExceptions;
-    }
+	public void setDelayCancelExceptions(Set<Class<? extends Exception>> delayCancelExceptions) {
+		this.delayCancelExceptions = delayCancelExceptions;
+	}
 
-    public Object interceptCompensableMethod(ProceedingJoinPoint pjp) throws Throwable {
+	public Object interceptCompensableMethod(ProceedingJoinPoint pjp) throws Throwable {
+		Method method = CompensableMethodUtils.getCompensableMethod(pjp);
 
-        Method method = CompensableMethodUtils.getCompensableMethod(pjp);
+		Compensable compensable = method.getAnnotation(Compensable.class);
+		Propagation propagation = compensable.propagation();
+		TransactionContext transactionContext = FactoryBuilder.factoryOf(compensable.transactionContextEditor()).getInstance().get(pjp.getTarget(), method, pjp.getArgs());
 
-        Compensable compensable = method.getAnnotation(Compensable.class);
-        Propagation propagation = compensable.propagation();
-        TransactionContext transactionContext = FactoryBuilder.factoryOf(compensable.transactionContextEditor()).getInstance().get(pjp.getTarget(), method, pjp.getArgs());
+		boolean isTransactionActive = transactionManager.isTransactionActive();
 
-        boolean isTransactionActive = transactionManager.isTransactionActive();
+		if (!TransactionUtils.isLegalTransactionContext(isTransactionActive, propagation, transactionContext)) {
+			throw new SystemException("no active compensable transaction while propagation is mandatory for method " + method.getName());
+		}
 
-        if (!TransactionUtils.isLegalTransactionContext(isTransactionActive, propagation, transactionContext)) {
-            throw new SystemException("no active compensable transaction while propagation is mandatory for method " + method.getName());
-        }
+		MethodType methodType = CompensableMethodUtils.calculateMethodType(propagation, isTransactionActive, transactionContext);
+		logger.info("intercept compensable, class:{}, method:{}", pjp.getTarget().getClass().getName(), method.getName() + " " + methodType.toString());
+		switch (methodType) {
+		case ROOT:
+			return rootMethodProceed(pjp);
+		case PROVIDER:
+			return providerMethodProceed(pjp, transactionContext);
+		default:
+			return pjp.proceed();
+		}
+	}
 
-        MethodType methodType = CompensableMethodUtils.calculateMethodType(propagation, isTransactionActive, transactionContext);
+	private Object rootMethodProceed(ProceedingJoinPoint pjp) throws Throwable {
 
-        switch (methodType) {
-            case ROOT:
-                return rootMethodProceed(pjp);
-            case PROVIDER:
-                return providerMethodProceed(pjp, transactionContext);
-            default:
-                return pjp.proceed();
-        }
-    }
+		Object returnValue = null;
 
+		Transaction transaction = null;
 
-    private Object rootMethodProceed(ProceedingJoinPoint pjp) throws Throwable {
+		try {
 
-        Object returnValue = null;
+			transaction = transactionManager.begin();
 
-        Transaction transaction = null;
+			try {
+				returnValue = pjp.proceed();
+			} catch (Throwable tryingException) {
 
-        try {
+				if (isDelayCancelException(tryingException)) {
 
-            transaction = transactionManager.begin();
+				} else {
+					logger.warn(String.format("compensable transaction trying failed. transaction content:%s", JSON.toJSONString(transaction)), tryingException);
 
-            try {
-                returnValue = pjp.proceed();
-            } catch (Throwable tryingException) {
+					transactionManager.rollback();
+				}
 
-                if (isDelayCancelException(tryingException)) {
+				throw tryingException;
+			}
 
-                } else {
-                    logger.warn(String.format("compensable transaction trying failed. transaction content:%s", JSON.toJSONString(transaction)), tryingException);
+			transactionManager.commit();
 
-                    transactionManager.rollback();
-                }
+		} finally {
+			transactionManager.cleanAfterCompletion(transaction);
+		}
 
-                throw tryingException;
-            }
+		return returnValue;
+	}
 
-            transactionManager.commit();
+	private Object providerMethodProceed(ProceedingJoinPoint pjp, TransactionContext transactionContext) throws Throwable {
 
-        } finally {
-            transactionManager.cleanAfterCompletion(transaction);
-        }
+		Transaction transaction = null;
+		try {
 
-        return returnValue;
-    }
+			switch (TransactionStatus.valueOf(transactionContext.getStatus())) {
+			case TRYING:
+				transaction = transactionManager.propagationNewBegin(transactionContext);
+				return pjp.proceed();
+			case CONFIRMING:
+				try {
+					transaction = transactionManager.propagationExistBegin(transactionContext);
+					transactionManager.commit();
+				} catch (NoExistedTransactionException excepton) {
+					// the transaction has been commit,ignore it.
+				}
+				break;
+			case CANCELLING:
 
-    private Object providerMethodProceed(ProceedingJoinPoint pjp, TransactionContext transactionContext) throws Throwable {
+				try {
+					transaction = transactionManager.propagationExistBegin(transactionContext);
+					transactionManager.rollback();
+				} catch (NoExistedTransactionException exception) {
+					// the transaction has been rollback,ignore it.
+				}
+				break;
+			}
 
-        Transaction transaction = null;
-        try {
+		} finally {
+			transactionManager.cleanAfterCompletion(transaction);
+		}
 
-            switch (TransactionStatus.valueOf(transactionContext.getStatus())) {
-                case TRYING:
-                    transaction = transactionManager.propagationNewBegin(transactionContext);
-                    return pjp.proceed();
-                case CONFIRMING:
-                    try {
-                        transaction = transactionManager.propagationExistBegin(transactionContext);
-                        transactionManager.commit();
-                    } catch (NoExistedTransactionException excepton) {
-                        //the transaction has been commit,ignore it.
-                    }
-                    break;
-                case CANCELLING:
+		Method method = ((MethodSignature) (pjp.getSignature())).getMethod();
 
-                    try {
-                        transaction = transactionManager.propagationExistBegin(transactionContext);
-                        transactionManager.rollback();
-                    } catch (NoExistedTransactionException exception) {
-                        //the transaction has been rollback,ignore it.
-                    }
-                    break;
-            }
+		return ReflectionUtils.getNullValue(method.getReturnType());
+	}
 
-        } finally {
-            transactionManager.cleanAfterCompletion(transaction);
-        }
+	private boolean isDelayCancelException(Throwable throwable) {
 
-        Method method = ((MethodSignature) (pjp.getSignature())).getMethod();
+		if (delayCancelExceptions != null) {
+			for (Class delayCancelException : delayCancelExceptions) {
 
-        return ReflectionUtils.getNullValue(method.getReturnType());
-    }
+				Throwable rootCause = ExceptionUtils.getRootCause(throwable);
 
-    private boolean isDelayCancelException(Throwable throwable) {
+				if (delayCancelException.isAssignableFrom(throwable.getClass()) || (rootCause != null && delayCancelException.isAssignableFrom(rootCause.getClass()))) {
+					return true;
+				}
+			}
+		}
 
-        if (delayCancelExceptions != null) {
-            for (Class delayCancelException : delayCancelExceptions) {
-
-                Throwable rootCause = ExceptionUtils.getRootCause(throwable);
-
-                if (delayCancelException.isAssignableFrom(throwable.getClass())
-                        || (rootCause != null && delayCancelException.isAssignableFrom(rootCause.getClass()))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
+		return false;
+	}
 
 }

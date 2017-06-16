@@ -57,6 +57,17 @@
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
         </dependency>
+        
+		<dependency>
+		    <groupId>org.apache.curator</groupId>
+		    <artifactId>curator-recipes</artifactId>
+		</dependency>
+		
+		<dependency>
+	        <groupId>mysql</groupId>
+	        <artifactId>mysql-connector-java</artifactId>
+	    </dependency>
+
 
     </dependencies>
 
