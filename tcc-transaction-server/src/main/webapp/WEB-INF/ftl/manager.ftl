@@ -31,7 +31,10 @@
             &emsp;&emsp;
             <div class="form-group">
                 <button class="btn btn-info j-add">查询</button>
+                <button class="btn btn-info j-hide-all-content">显示/隐藏所有</button>
+                <button class="btn btn-info j-format-all-content" style="display:none;">美化</button>
             </div>
+            <div id="id_transaction_idempotent"></div>
         </div>
         <br/>
         <div class="table-responsive">
@@ -48,6 +51,7 @@
                     <th>CREATE_TIME</th>
                     <th>LAST_UPDATE_TIME</th>
                     <th>操作</th>
+                    <th>CONTENT</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -63,7 +67,10 @@
                     <td>${transactionVo.lastUpdateTime?datetime}</td>
                     <td>
                         <button class="btn btn-info btn-xs j-edit" data-url="" data-echo="">重置</button>
+                        <button class="btn btn-info btn-xs j-invoke_path" data-url="" data-echo="">调用过程</button>
+                        <button class="btn btn-info btn-xs j-content-show" data-url="" data-echo="">显示/隐藏</button> &nbsp; 
                     </td>
+                    <td><span id="id_tx_content_${transactionVo.globalTxId}_${transactionVo.branchQualifier}" style="display:none;">${transactionVo.content}</span></td>
                 </tr>
                 [/#list]
 

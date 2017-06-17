@@ -15,7 +15,7 @@ import javax.transaction.xa.Xid;
 
 import org.mengyun.tcctransaction.Transaction;
 import org.mengyun.tcctransaction.api.TransactionStatus;
-import org.mengyun.tcctransaction.serializer.JdkSerializationSerializer;
+import org.mengyun.tcctransaction.serializer.JsonTransactionSerializer;
 import org.mengyun.tcctransaction.serializer.ObjectSerializer;
 import org.mengyun.tcctransaction.utils.CollectionUtils;
 import org.mengyun.tcctransaction.utils.StringUtils;
@@ -31,7 +31,7 @@ public class JdbcTransactionRepository extends CachableTransactionRepository {
 
 	private DataSource dataSource;
 
-	private ObjectSerializer serializer = new JdkSerializationSerializer();
+	private ObjectSerializer<Transaction> serializer = new JsonTransactionSerializer();
 
 	public String getDomain() {
 		return domain;

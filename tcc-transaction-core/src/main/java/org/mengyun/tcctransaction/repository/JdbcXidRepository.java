@@ -7,7 +7,7 @@ import java.sql.Statement;
 
 import javax.sql.DataSource;
 
-import org.mengyun.tcctransaction.api.TransactionXid;
+import org.mengyun.tcctransaction.api.TransactionContext;
 import org.mengyun.tcctransaction.utils.StringUtils;
 
 /**
@@ -77,7 +77,7 @@ public class JdbcXidRepository {
 		return StringUtils.isNotEmpty(tbSuffix) ? "tcc_idempotent" + tbSuffix : "tcc_idempotent";
 	}
 
-	public int createXid(TransactionXid xid) {
+	public int createXid(TransactionContext tctx, String methodName) {
 
 		Connection connection = null;
 		PreparedStatement stmt = null;
@@ -87,17 +87,19 @@ public class JdbcXidRepository {
 			// connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/TCC?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true", "root", "root");
 
 			StringBuilder builder = new StringBuilder();
-			builder.append("INSERT INTO " + getTableName() + "(gtxid, btxid,create_time");
-			builder.append(StringUtils.isNotEmpty(domain) ? ",domain ) VALUES (?,?,?,?)" : ") VALUES (?,?,?)");
+			builder.append("INSERT INTO " + getTableName() + "(gtxid, btxid, create_time, method, status");
+			builder.append(StringUtils.isNotEmpty(domain) ? ",domain ) VALUES (?,?,?,?,?,?)" : ") VALUES (?,?,?,?,?)");
 
 			stmt = connection.prepareStatement(builder.toString());
 
-			stmt.setBytes(1, xid.getGlobalTransactionId());
-			stmt.setBytes(2, xid.getBranchQualifier());
-			stmt.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));
+			stmt.setBytes(1, tctx.getXid().getGlobalTransactionId());
+			stmt.setBytes(2, tctx.getXid().getBranchQualifier());
+			stmt.setLong(3, System.currentTimeMillis());
+			stmt.setString(4, methodName);
+			stmt.setInt(5, tctx.getStatus());
 
 			if (StringUtils.isNotEmpty(domain)) {
-				stmt.setString(4, domain);
+				stmt.setString(6, domain);
 			}
 
 			return stmt.executeUpdate();

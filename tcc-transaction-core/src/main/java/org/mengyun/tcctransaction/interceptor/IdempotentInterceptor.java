@@ -44,7 +44,7 @@ public class IdempotentInterceptor {
 			throw new RuntimeException("only confirming OR cancelling method supported.");
 		}
 
-		int xidRet = jdbcXidRepository.createXid(transactionContext.getXid());
+		int xidRet = jdbcXidRepository.createXid(transactionContext, method.getName());
 		if (xidRet == -1) {
 			logger.error("repetitive execution, method:{}, transactionStatus:{}", method.getName(), transactionStatus.toString());
 			return null;

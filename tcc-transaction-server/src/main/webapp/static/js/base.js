@@ -53,11 +53,61 @@ jQuery(document).ready(function($) {
 			if(result.code === 200) {
 				location.reload();
 			}
-			console.log(result.msg);
+			console.log(result.message);
 		})
 		.fail(function() {
 			console.log(arguments);
 		});
 		
 	});
+	
+	$('.table > tbody').on('click', '.j-content-show', function () {
+		var $this = $(this),
+			globalTxId,
+			branchQualifier;
+
+		globalTxId = $this.parent().siblings().eq(1).text();
+		branchQualifier = $this.parent().siblings().eq(2).text();
+		
+		$("#id_tx_content_" + globalTxId + "_" + branchQualifier).toggle();
+	});
+	
+	$('.table > tbody').on('click', '.j-invoke_path', function () {
+		var $this = $(this),
+		globalTxId,
+		branchQualifier;
+		
+		globalTxId = $this.parent().siblings().eq(1).text();
+		branchQualifier = $this.parent().siblings().eq(2).text();
+		
+		url = config.tcc_domain + '/idempotent/' + globalTxId;
+		$.ajax({
+			url: url,
+			type: 'GET',
+			dataType: 'json'
+		})
+		.done(function(result) {
+			if(result.code === 200) {
+				$("#id_transaction_idempotent").html(JSON.stringify(result.data));
+			}
+			console.log(result.message);
+		})
+		.fail(function() {
+			console.log(arguments);
+		});
+	});
+	
+	$('.j-hide-all-content').on('click', function () {
+		$("span").toggle();
+	});
+	
+	$('.j-format-all-content').on('click', function () {
+		$(this).hide();
+		$.each($("span"), function(i,n){
+//			$(n).val(JSON.stringify($(n).val()));
+			n.innerText = JSON.stringify(n.innerText);
+		});
+	});
+	
+	
 });

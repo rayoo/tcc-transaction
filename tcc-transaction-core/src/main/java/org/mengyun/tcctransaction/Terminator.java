@@ -25,7 +25,7 @@ public class Terminator implements Serializable {
 
 	public Object invoke(TransactionContext transactionContext, InvocationContext invocationContext, Class<? extends TransactionContextEditor> transactionContextEditorClass) {
 		logger.info("invoke context:{}, class:{}", invocationContext.getMethodName() + " " + JSON.toJSON(transactionContext) + " " + JSON.toJSON(invocationContext),
-				transactionContextEditorClass.getName());
+				null == transactionContextEditorClass ? null : transactionContextEditorClass.getName());
 		if (StringUtils.isNotEmpty(invocationContext.getMethodName())) {
 
 			try {

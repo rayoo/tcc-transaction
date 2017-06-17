@@ -7,83 +7,93 @@ import java.util.Date;
  */
 public class TransactionVo {
 
-    private String domain;
+	private String domain;
 
-    private String globalTxId;
+	private String globalTxId;
 
-    private String branchQualifier;
+	private String branchQualifier;
 
-    private Integer status;
+	private Integer status;
 
-    private Integer transactionType;
+	private Integer transactionType;
 
-    private Integer retriedCount;
+	private Integer retriedCount;
 
-    private Date createTime;
+	private Date createTime;
 
-    private Date lastUpdateTime;
+	private Date lastUpdateTime;
 
-    public String getDomain() {
-        return domain;
-    }
+	private String content;
 
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
+	public String getContent() {
+		return content;
+	}
 
-    public String getGlobalTxId() {
-        return globalTxId;
-    }
+	public void setContent(String content) {
+		this.content = content;
+	}
 
-    public void setGlobalTxId(String globalTxId) {
-        this.globalTxId = globalTxId;
-    }
+	public String getDomain() {
+		return domain;
+	}
 
-    public String getBranchQualifier() {
-        return branchQualifier;
-    }
+	public void setDomain(String domain) {
+		this.domain = domain;
+	}
 
-    public void setBranchQualifier(String branchQualifier) {
-        this.branchQualifier = branchQualifier;
-    }
+	public String getGlobalTxId() {
+		return globalTxId;
+	}
 
-    public Integer getStatus() {
-        return status;
-    }
+	public void setGlobalTxId(String globalTxId) {
+		this.globalTxId = globalTxId;
+	}
 
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
+	public String getBranchQualifier() {
+		return branchQualifier;
+	}
 
-    public Integer getTransactionType() {
-        return transactionType;
-    }
+	public void setBranchQualifier(String branchQualifier) {
+		this.branchQualifier = branchQualifier;
+	}
 
-    public void setTransactionType(Integer transactionType) {
-        this.transactionType = transactionType;
-    }
+	public Integer getStatus() {
+		return status;
+	}
 
-    public Integer getRetriedCount() {
-        return retriedCount;
-    }
+	public void setStatus(Integer status) {
+		this.status = status;
+	}
 
-    public void setRetriedCount(Integer retriedCount) {
-        this.retriedCount = retriedCount;
-    }
+	public Integer getTransactionType() {
+		return transactionType;
+	}
 
-    public Date getCreateTime() {
-        return createTime;
-    }
+	public void setTransactionType(Integer transactionType) {
+		this.transactionType = transactionType;
+	}
 
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
+	public Integer getRetriedCount() {
+		return retriedCount;
+	}
 
-    public Date getLastUpdateTime() {
-        return lastUpdateTime;
-    }
+	public void setRetriedCount(Integer retriedCount) {
+		this.retriedCount = retriedCount;
+	}
 
-    public void setLastUpdateTime(Date lastUpdateTime) {
-        this.lastUpdateTime = lastUpdateTime;
-    }
+	public Date getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
+
+	public Date getLastUpdateTime() {
+		return lastUpdateTime;
+	}
+
+	public void setLastUpdateTime(Date lastUpdateTime) {
+		this.lastUpdateTime = lastUpdateTime;
+	}
 }

@@ -19,8 +19,8 @@
     <!-- 幂等性切面 begin -->
     <bean id="jdbcXidRepository" class="org.mengyun.tcctransaction.spring.repository.SpringJdbcXidRepository">
 	    <property name="dataSource" ref="bizbDataSource"/>
-	    <!-- <property name="domain" value="BIZB"/>
-	    <property name="tbSuffix" value="_BIZB"/> -->
+	    <property name="domain" value="BIZB"/>
+	    <!-- <property name="tbSuffix" value="_BIZB"/> -->
     </bean>
     
     <bean id="configurableIdempotentAspect" class="org.mengyun.tcctransaction.spring.ConfigurableIdempotentAspect"
