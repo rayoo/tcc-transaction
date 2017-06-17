@@ -1,9 +1,9 @@
 package org.mengyun.tcctransaction.sample.dubbo.order.domain.repository;
 
 import org.mengyun.tcctransaction.sample.dubbo.order.domain.entity.Order;
+import org.mengyun.tcctransaction.sample.dubbo.order.domain.entity.OrderLine;
 import org.mengyun.tcctransaction.sample.dubbo.order.infrastructure.dao.OrderDao;
 import org.mengyun.tcctransaction.sample.dubbo.order.infrastructure.dao.OrderLineDao;
-import org.mengyun.tcctransaction.sample.dubbo.order.domain.entity.OrderLine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 

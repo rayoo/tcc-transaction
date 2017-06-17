@@ -13,12 +13,10 @@ import org.springframework.context.ApplicationContextAware;
 public class SpringBeanFactory implements BeanFactory, ApplicationContextAware {
 
 	private ApplicationContext applicationContext;
-	private static ApplicationContext staticAplicationContext;
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = applicationContext;
-		staticAplicationContext = applicationContext;
 	}
 
 	@Override
@@ -33,18 +31,11 @@ public class SpringBeanFactory implements BeanFactory, ApplicationContextAware {
 	}
 
 	/**
-	 * 从静态变量applicationContext中取得Bean, 自动转型为所赋值对象的类型.
+	 * 从静态变量applicationContext中取得Bean, 自动转型为所赋值对象的类型. private static ApplicationContext staticAplicationContext;
+	 * 
+	 * public static <T> T getsBean(String name) { return (T) staticAplicationContext.getBean(name); }
+	 * 
+	 * public static <T> T getsBean(Class<T> requiredType) { return staticAplicationContext.getBean(requiredType); }
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T> T getsBean(String name) {
-		return (T) staticAplicationContext.getBean(name);
-	}
-
-	/**
-	 * 从静态变量applicationContext中取得Bean, 自动转型为所赋值对象的类型.
-	 */
-	public static <T> T getsBean(Class<T> requiredType) {
-		return staticAplicationContext.getBean(requiredType);
-	}
 
 }

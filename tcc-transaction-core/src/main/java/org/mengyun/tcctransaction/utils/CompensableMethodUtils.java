@@ -1,13 +1,13 @@
 package org.mengyun.tcctransaction.utils;
 
+import java.lang.reflect.Method;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.mengyun.tcctransaction.api.Compensable;
 import org.mengyun.tcctransaction.api.Propagation;
 import org.mengyun.tcctransaction.api.TransactionContext;
 import org.mengyun.tcctransaction.common.MethodType;
-
-import java.lang.reflect.Method;
 
 /**
  * Created by changmingxie on 11/21/15.

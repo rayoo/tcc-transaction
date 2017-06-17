@@ -1,8 +1,7 @@
 package org.mengyun.tcctransaction.dubbo.proxy.jdk;
 
-import com.alibaba.dubbo.common.utils.StringUtils;
-import com.alibaba.dubbo.rpc.Invoker;
-import com.alibaba.dubbo.rpc.proxy.InvokerInvocationHandler;
+import java.lang.reflect.Method;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.mengyun.tcctransaction.api.Compensable;
 import org.mengyun.tcctransaction.api.Propagation;
@@ -11,7 +10,9 @@ import org.mengyun.tcctransaction.interceptor.ResourceCoordinatorAspect;
 import org.mengyun.tcctransaction.support.FactoryBuilder;
 import org.mengyun.tcctransaction.utils.ReflectionUtils;
 
-import java.lang.reflect.Method;
+import com.alibaba.dubbo.common.utils.StringUtils;
+import com.alibaba.dubbo.rpc.Invoker;
+import com.alibaba.dubbo.rpc.proxy.InvokerInvocationHandler;
 
 /**
  * Created by changming.xie on 2/26/17.

@@ -11,8 +11,6 @@ import org.mengyun.tcctransaction.utils.CompensableMethodUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSON;
-
 /**
  * @author rayoo
  */
@@ -39,9 +37,10 @@ public class IdempotentInterceptor {
 
 		TransactionStatus transactionStatus = TransactionStatus.valueOf(transactionContext.getStatus());
 
-		logger.info("interceptor idempotent method, method:{}, transactionContext:{}", method.getName(), JSON.toJSON(transactionContext));
-		if (transactionStatus != TransactionStatus.CONFIRMING && transactionStatus != TransactionStatus.CANCELLING) {
-			throw new RuntimeException("only confirming OR cancelling method supported.");
+		logger.info("interceptor idempotent method, method:{}, transactionContext:{}", method.getName(), transactionContext);
+
+		if (transactionStatus == TransactionStatus.TRYING) { // try 阶段不做拦截
+			return pjp.proceed();
 		}
 
 		int xidRet = jdbcXidRepository.createXid(transactionContext, method.getName());

@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alibaba.fastjson.JSON;
 import com.yonyou.biza.api.UserHonourService;
 import com.yonyou.biza.dao.UserHonourDao;
 import com.yonyou.biza.entity.UserHonour;
@@ -25,7 +24,7 @@ public class UserHonourServiceImpl implements UserHonourService {
 	@Compensable(confirmMethod = "confirmDelUserHonour", cancelMethod = "cancelDelUserHonour", transactionContextEditor = MethodTransactionContextEditor.class)
 	@Transactional
 	public void delUserHonour(TransactionContext transactionContext, long userId) {
-		logger.info(">> delUserHonour {}", JSON.toJSON(transactionContext));
+		logger.info(">> delUserHonour {}", transactionContext);
 		UserHonour userHonour = new UserHonour();
 
 		userHonour.setUserId(userId);
@@ -37,10 +36,10 @@ public class UserHonourServiceImpl implements UserHonourService {
 	@Idempotent
 	@Transactional
 	public void confirmDelUserHonour(TransactionContext transactionContext, long userId) {
-		logger.info(">> confirmDelUserHonour {}", JSON.toJSON(transactionContext));
+		logger.info(">> confirmDelUserHonour {}", transactionContext);
+		int i = 1 / 0;
 		UserHonour userHonour = userHonourDao.findByUserId(userId);
 		if (null != userHonour && userHonour.getDr() == 1) {
-			int i = 1 / 0;
 			userHonourDao.delete(userId);
 		}
 	}
@@ -48,7 +47,7 @@ public class UserHonourServiceImpl implements UserHonourService {
 	@Idempotent
 	@Transactional
 	public void cancelDelUserHonour(TransactionContext transactionContext, long userId) {
-		logger.info(">> cancelDelUserHonour {}", JSON.toJSON(transactionContext));
+		logger.info(">> cancelDelUserHonour {}", transactionContext);
 		UserHonour userHonour = userHonourDao.findByUserId(userId);
 		if (null != userHonour && userHonour.getDr() == 1) {
 			userHonour.setDr(0);

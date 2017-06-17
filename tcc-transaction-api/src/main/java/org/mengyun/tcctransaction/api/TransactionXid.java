@@ -1,11 +1,12 @@
 package org.mengyun.tcctransaction.api;
 
 
-import javax.transaction.xa.Xid;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
+
+import javax.transaction.xa.Xid;
 
 /**
  * Created by changmingxie on 10/26/15.

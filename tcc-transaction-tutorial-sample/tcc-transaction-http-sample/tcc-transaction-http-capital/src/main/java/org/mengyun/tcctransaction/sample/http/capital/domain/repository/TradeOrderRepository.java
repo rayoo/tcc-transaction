@@ -3,7 +3,6 @@ package org.mengyun.tcctransaction.sample.http.capital.domain.repository;
 import org.mengyun.tcctransaction.sample.http.capital.domain.entity.TradeOrder;
 import org.mengyun.tcctransaction.sample.http.capital.infrastructure.dao.TradeOrderDao;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
 
 /**
  * Created by twinkle.zhou on 16/11/14.

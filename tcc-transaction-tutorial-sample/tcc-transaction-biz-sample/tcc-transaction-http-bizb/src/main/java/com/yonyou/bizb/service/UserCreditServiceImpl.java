@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.alibaba.fastjson.JSON;
 import com.yonyou.bizb.api.UserCreditService;
 import com.yonyou.bizb.dao.UserCreditDao;
 import com.yonyou.bizb.entity.UserCredit;
@@ -23,7 +22,7 @@ public class UserCreditServiceImpl implements UserCreditService {
 	// @Compensable(confirmMethod = "confirmDelUserCredit", cancelMethod = "cancelDelUserCredit", transactionContextEditor = MethodTransactionContextEditor.class)
 	@Transactional
 	public void delUserCredit(TransactionContext transactionContext, long userId) {
-		logger.info(">> delUserCredit {}", JSON.toJSON(transactionContext));
+		logger.info(">> delUserCredit {}", transactionContext);
 		UserCredit userCredit = new UserCredit();
 
 		userCredit.setUserId(userId);
@@ -35,10 +34,10 @@ public class UserCreditServiceImpl implements UserCreditService {
 	@Idempotent
 	@Transactional
 	public void confirmDelUserCredit(TransactionContext transactionContext, long userId) {
-		logger.info(">> confirmDelUserCredit {}", JSON.toJSON(transactionContext));
+		logger.info(">> confirmDelUserCredit {}", transactionContext);
 		UserCredit userCredit = userCreditDao.findByUserId(userId);
 		if (null != userCredit && userCredit.getDr() == 1) {
-			// int i = 1 / 0;
+			int i = 1 / 0;
 			userCreditDao.delete(userId);
 		}
 	}
@@ -46,7 +45,7 @@ public class UserCreditServiceImpl implements UserCreditService {
 	@Idempotent
 	@Transactional
 	public void cancelDelUserCredit(TransactionContext transactionContext, long userId) {
-		logger.info(">> cancelDelUserCredit {}", JSON.toJSON(transactionContext));
+		logger.info(">> cancelDelUserCredit {}", transactionContext);
 		UserCredit userCredit = userCreditDao.findByUserId(userId);
 		if (null != userCredit && userCredit.getDr() == 1) {
 			userCredit.setDr(0);

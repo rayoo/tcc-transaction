@@ -1,11 +1,11 @@
 package org.mengyun.tcctransaction.sample.http.order.domain.repository;
 
+import java.util.List;
+
 import org.mengyun.tcctransaction.sample.http.order.domain.entity.Product;
 import org.mengyun.tcctransaction.sample.http.order.infrastructure.dao.ProductDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 /**
  * Created by twinkle.zhou on 16/11/10.

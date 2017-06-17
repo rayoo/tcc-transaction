@@ -1,10 +1,10 @@
 package org.mengyun.tcctransaction.spring.repository;
 
 
+import java.sql.Connection;
+
 import org.mengyun.tcctransaction.repository.JdbcTransactionRepository;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-
-import java.sql.Connection;
 
 /**
  * Created by changmingxie on 10/30/15.

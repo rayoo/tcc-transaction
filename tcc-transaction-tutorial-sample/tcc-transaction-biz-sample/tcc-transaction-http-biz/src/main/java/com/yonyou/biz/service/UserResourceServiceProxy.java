@@ -25,6 +25,8 @@ public class UserResourceServiceProxy {
 	UserCreditService userCreditService;
 
 	@Compensable(propagation = Propagation.SUPPORTS, confirmMethod = "delUserHonour", cancelMethod = "delUserHonour", transactionContextEditor = MethodTransactionContextEditor.class)
+	@Idempotent
+	@Transactional
 	public void delUserHonour(TransactionContext transactionContext, long userId) {
 		logger.info(">> delUserHonour");
 		userHonourService.delUserHonour(transactionContext, userId);

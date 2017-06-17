@@ -1,8 +1,8 @@
 package org.mengyun.tcctransaction.server.dao;
 
-import org.mengyun.tcctransaction.server.vo.TransactionVo;
-
 import java.util.List;
+
+import org.mengyun.tcctransaction.server.vo.TransactionVo;
 
 /**
  * Created by changming.xie on 9/7/16.

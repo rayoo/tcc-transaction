@@ -1,8 +1,8 @@
 package org.mengyun.tcctransaction.server.vo;
 
-import org.springframework.http.HttpStatus;
-
 import java.io.Serializable;
+
+import org.springframework.http.HttpStatus;
 
 /**
  * Created by cheng.zeng on 2016/9/2.

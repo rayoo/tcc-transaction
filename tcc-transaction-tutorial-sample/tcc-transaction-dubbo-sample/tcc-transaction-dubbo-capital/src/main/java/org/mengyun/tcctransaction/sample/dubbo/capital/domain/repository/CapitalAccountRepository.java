@@ -1,7 +1,7 @@
 package org.mengyun.tcctransaction.sample.dubbo.capital.domain.repository;
 
-import org.mengyun.tcctransaction.sample.dubbo.capital.infrastructure.dao.CapitalAccountDao;
 import org.mengyun.tcctransaction.sample.dubbo.capital.domain.entity.CapitalAccount;
+import org.mengyun.tcctransaction.sample.dubbo.capital.infrastructure.dao.CapitalAccountDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 

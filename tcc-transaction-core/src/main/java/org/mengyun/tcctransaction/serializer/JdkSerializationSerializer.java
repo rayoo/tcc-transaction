@@ -1,6 +1,10 @@
 package org.mengyun.tcctransaction.serializer;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
  * Created by changming.xie on 7/22/16.
