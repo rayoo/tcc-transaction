@@ -24,25 +24,25 @@ public class UserResourceServiceProxy {
 	@Autowired
 	UserCreditService userCreditService;
 
-	@Compensable(propagation = Propagation.SUPPORTS, confirmMethod = "confirmDelUserHonour", cancelMethod = "cancelDelUserHonour", transactionContextEditor = MethodTransactionContextEditor.class)
+	@Compensable(propagation = Propagation.SUPPORTS, confirmMethod = "delUserHonour", cancelMethod = "delUserHonour", transactionContextEditor = MethodTransactionContextEditor.class)
 	public void delUserHonour(TransactionContext transactionContext, long userId) {
 		logger.info(">> delUserHonour");
 		userHonourService.delUserHonour(transactionContext, userId);
 	}
 
-	@Idempotent
-	@Transactional
-	public void confirmDelUserHonour(TransactionContext transactionContext, long userId) {
-		logger.info(">> confirmDelUserHonour");
-		userHonourService.confirmDelUserHonour(transactionContext, userId);
-	}
-
-	@Idempotent
-	@Transactional
-	public void cancelDelUserHonour(TransactionContext transactionContext, long userId) {
-		logger.info(">> cancelDelUserHonour");
-		userHonourService.cancelDelUserHonour(transactionContext, userId);
-	}
+	// @Idempotent
+	// @Transactional
+	// public void confirmDelUserHonour(TransactionContext transactionContext, long userId) {
+	// logger.info(">> confirmDelUserHonour");
+	// userHonourService.confirmDelUserHonour(transactionContext, userId);
+	// }
+	//
+	// @Idempotent
+	// @Transactional
+	// public void cancelDelUserHonour(TransactionContext transactionContext, long userId) {
+	// logger.info(">> cancelDelUserHonour");
+	// userHonourService.cancelDelUserHonour(transactionContext, userId);
+	// }
 
 	@Compensable(propagation = Propagation.SUPPORTS, confirmMethod = "confirmDelUserCredit", cancelMethod = "cancelDelUserCredit", transactionContextEditor = MethodTransactionContextEditor.class)
 	public void delUserCredit(TransactionContext transactionContext, long userId) {

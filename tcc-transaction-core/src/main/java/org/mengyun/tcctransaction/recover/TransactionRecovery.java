@@ -45,6 +45,8 @@ public class TransactionRecovery {
 						logger.info("concurrent execution, exit.");
 						return;
 					}
+				} else {
+					logger.warn("The transaction recover task is not executed using a distributed lock.");
 				}
 			} catch (Exception e) {
 				logger.error("zookeeper 同步锁异常", e);

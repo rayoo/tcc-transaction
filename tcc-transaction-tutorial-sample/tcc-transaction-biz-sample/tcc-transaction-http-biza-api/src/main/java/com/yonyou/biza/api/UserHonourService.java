@@ -6,8 +6,8 @@ public interface UserHonourService {
 
 	public void delUserHonour(TransactionContext transactionContext, long userId);
 
-	public void confirmDelUserHonour(TransactionContext transactionContext, long userId);
-
-	public void cancelDelUserHonour(TransactionContext transactionContext, long userId);
+	// public void confirmDelUserHonour(TransactionContext transactionContext, long userId);
+	//
+	// public void cancelDelUserHonour(TransactionContext transactionContext, long userId);
 
 }

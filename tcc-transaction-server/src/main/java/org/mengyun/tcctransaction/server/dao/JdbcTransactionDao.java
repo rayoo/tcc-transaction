@@ -4,9 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -15,7 +13,6 @@ import javax.xml.bind.DatatypeConverter;
 import org.mengyun.tcctransaction.server.utils.DBUtils;
 import org.mengyun.tcctransaction.server.vo.PageVo;
 import org.mengyun.tcctransaction.server.vo.TransactionVo;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -30,25 +27,26 @@ public class JdbcTransactionDao implements TransactionDao {
 
 	private static final String TABLE_NAME_PREFIX = "TCC_TRANSACTION";
 
-	@Value("#{jdbcDomainSuffix}")
-	private Properties domainSuffix;
+	// @Value("#{jdbcDomainSuffix}")
+	// private Properties domainSuffix;
 
 	@Override
 	public List<TransactionVo> findTransactions(String domain, Integer pageNum, int pageSize) {
-		if (domainSuffix.getProperty(domain) == null) {
-			return Collections.emptyList();
-		}
+		// if (domainSuffix.getProperty(domain) == null) {
+		// return Collections.emptyList();
+		// }
 		Connection connection = DBUtils.getConnection(dataSource);
 		List<TransactionVo> transactionVos = new ArrayList<TransactionVo>();
 		PreparedStatement preparedStatement = null;
 		try {
-			String tableName = TABLE_NAME_PREFIX + domainSuffix.getProperty(domain);
+			String tableName = TABLE_NAME_PREFIX /* + domainSuffix.getProperty(domain) */;
 			String sql = "select DOMAIN," + "GLOBAL_TX_ID," + "BRANCH_QUALIFIER," + "STATUS," + "TRANSACTION_TYPE," + "RETRIED_COUNT," + "CREATE_TIME," + "LAST_UPDATE_TIME,"
-					+ "CONTENT from " + tableName + " order by create_time desc limit ?,?";
+					+ "CONTENT from " + tableName + " where domain=? order by create_time desc limit ?,?";
 
 			preparedStatement = connection.prepareStatement(sql);
-			preparedStatement.setInt(1, (pageNum - 1) * pageSize);
-			preparedStatement.setInt(2, pageSize);
+			preparedStatement.setString(1, domain);
+			preparedStatement.setInt(2, (pageNum - 1) * pageSize);
+			preparedStatement.setInt(3, pageSize);
 
 			ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -76,9 +74,9 @@ public class JdbcTransactionDao implements TransactionDao {
 
 	@Override
 	public Integer countOfFindTransactions(String domain) {
-		if (domainSuffix.getProperty(domain) == null) {
-			return 0;
-		}
+		// if (domainSuffix.getProperty(domain) == null) {
+		// return 0;
+		// }
 		Connection connection = DBUtils.getConnection(dataSource);
 		PageVo<TransactionVo> pageVo = new PageVo<TransactionVo>();
 		List<TransactionVo> transactionVos = new ArrayList<TransactionVo>();
@@ -86,7 +84,7 @@ public class JdbcTransactionDao implements TransactionDao {
 		PreparedStatement preparedStatement = null;
 
 		try {
-			String tableName = TABLE_NAME_PREFIX + domainSuffix.getProperty(domain);
+			String tableName = TABLE_NAME_PREFIX/* + domainSuffix.getProperty(domain) */;
 
 			preparedStatement = connection.prepareStatement("select COUNT(*) as count from " + tableName);
 			ResultSet resultSet = preparedStatement.executeQuery();
@@ -104,14 +102,13 @@ public class JdbcTransactionDao implements TransactionDao {
 
 	@Override
 	public boolean resetRetryCount(String domain, byte[] globalTxId, byte[] branchQualifier) {
-		if (domainSuffix.getProperty(domain) == null) {
-			return false;
-		}
+		// if (domainSuffix.getProperty(domain) == null) {
+		// return false;
+		// }
 		Connection connection = DBUtils.getConnection(dataSource);
 		PreparedStatement preparedStatement = null;
 		try {
-			String tableName = TABLE_NAME_PREFIX + domainSuffix.getProperty(domain);
-			;
+			String tableName = TABLE_NAME_PREFIX/* + domainSuffix.getProperty(domain) */;
 			String sql = "UPDATE " + tableName + " SET RETRIED_COUNT=0" + " WHERE GLOBAL_TX_ID = ? AND BRANCH_QUALIFIER = ?";
 			preparedStatement = connection.prepareStatement(sql);
 			preparedStatement.setBytes(1, globalTxId);

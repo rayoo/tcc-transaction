@@ -33,13 +33,15 @@
         <property name="maxRetryCount" value="5"/>
         <property name="recoverDuration" value="60"/>
         <property name="cronExpression" value="0/30 * * * * ?"/>
+        <!-- 单机应用可以不配置以下zookeeper去保证分布式锁
+        <property name="zookeeperNamespace" value="localhost:2181/BIZ"/> -->
     </bean>
 
     <bean id="transactionRepository"
           class="org.mengyun.tcctransaction.spring.repository.SpringJdbcTransactionRepository">
         <property name="dataSource" ref="tccDataSource"/>
         <property name="domain" value="BIZA"/>
-        <property name="tbSuffix" value="_BIZA"/>
+        <!-- <property name="tbSuffix" value="_BIZA"/> -->
     </bean>
 
     <!--<bean id="transactionRepository" class="org.mengyun.tcctransaction.repository.RedisTransactionRepository">-->

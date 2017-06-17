@@ -1,7 +1,9 @@
 package com.yonyou.biza.service;
 
+import org.mengyun.tcctransaction.api.Compensable;
 import org.mengyun.tcctransaction.api.Idempotent;
 import org.mengyun.tcctransaction.api.TransactionContext;
+import org.mengyun.tcctransaction.context.MethodTransactionContextEditor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,7 @@ public class UserHonourServiceImpl implements UserHonourService {
 	UserHonourDao userHonourDao;
 
 	@Override
-	// @Compensable(confirmMethod = "confirmDelUserHonour", cancelMethod = "cancelDelUserHonour", transactionContextEditor = MethodTransactionContextEditor.class)
+	@Compensable(confirmMethod = "confirmDelUserHonour", cancelMethod = "cancelDelUserHonour", transactionContextEditor = MethodTransactionContextEditor.class)
 	@Transactional
 	public void delUserHonour(TransactionContext transactionContext, long userId) {
 		logger.info(">> delUserHonour {}", JSON.toJSON(transactionContext));
@@ -38,7 +40,7 @@ public class UserHonourServiceImpl implements UserHonourService {
 		logger.info(">> confirmDelUserHonour {}", JSON.toJSON(transactionContext));
 		UserHonour userHonour = userHonourDao.findByUserId(userId);
 		if (null != userHonour && userHonour.getDr() == 1) {
-			// int i = 1 / 0;
+			int i = 1 / 0;
 			userHonourDao.delete(userId);
 		}
 	}
