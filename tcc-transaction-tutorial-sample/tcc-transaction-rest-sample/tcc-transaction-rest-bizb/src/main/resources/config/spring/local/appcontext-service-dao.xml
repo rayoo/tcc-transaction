@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="com.yonyou.bizb"/>
+    
+    <!-- 启用@Aspect注解 -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="bizbDataSource"/>
+        <property name="mapperLocations" value="classpath*:config/sqlmap/main/bizb-*.xml"/>
+    </bean>
+
+    <bean id="userCreditDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="com.yonyou.bizb.dao.UserCreditDao"/>
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+    </bean> 
+    
+    <!-- 幂等性切面 begin -->
+    <bean id="jdbcXidRepository" class="com.yonyou.tcctransaction.idempotent.repository.SpringJdbcXidRepository">
+	    <property name="dataSource" ref="bizbDataSource"/>
+	    <property name="domain" value="BIZB"/>
+	    <!-- <property name="tbSuffix" value="_BIZB"/> -->
+    </bean>
+    
+    <bean id="configurableIdempotentAspect" class="com.yonyou.tcctransaction.idempotent.ConfigurableIdempotentAspect"
+          init-method="init">
+        <property name="jdbcXidRepository" ref="jdbcXidRepository"/>
+    </bean>
+    <!-- 幂等性切面 end -->
+    
+</beans>
