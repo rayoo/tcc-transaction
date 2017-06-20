@@ -15,6 +15,7 @@
         <module>tcc-transaction-dubbo-sample</module>
         <module>tcc-transaction-http-sample</module>
         <module>tcc-transaction-biz-sample</module>
+        <module>tcc-transaction-rest-sample</module>
     </modules>
 
 

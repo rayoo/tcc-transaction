@@ -14,14 +14,26 @@ public class DefaultRecoverConfig implements RecoverConfig {
 
 	public static final RecoverConfig INSTANCE = new DefaultRecoverConfig();
 
+	/**
+	 * 最大重试次数
+	 */
 	private int maxRetryCount = 30;
 
+	/**
+	 * 事务最长执行时长,超过此时长将会被认为是失败事务
+	 */
 	private int recoverDuration = 120; // 120 seconds
 
+	/**
+	 * 定时执行cron表达式
+	 */
 	private String cronExpression = "0 */1 * * * ?";
 
 	private Set<Class<? extends Exception>> delayCancelExceptions = new HashSet<Class<? extends Exception>>();
 
+	/**
+	 * 格式为ip:port/namespace的zk配置
+	 */
 	private String zookeeperNamespace;
 
 	public String getZookeeperNamespace() {

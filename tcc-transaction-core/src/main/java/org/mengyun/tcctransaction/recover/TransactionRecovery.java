@@ -40,6 +40,9 @@ public class TransactionRecovery {
 			try {
 				if (StringUtils.isNotBlank(transactionConfigurator.getRecoverConfig().getZookeeperNamespace())) {
 					String[] zkServerNamespace = transactionConfigurator.getRecoverConfig().getZookeeperNamespace().split("/");
+					if (zkServerNamespace.length != 2 || StringUtils.isBlank(zkServerNamespace[0]) || StringUtils.isBlank(zkServerNamespace[1])) {
+						throw new RuntimeException("zookeeper配置错误,格式为:ip:port/namespaceStr");
+					}
 					lock = new InterProcessMutex(ZooKeeperHelper.getZKClient(zkServerNamespace[0], "TCC/" + zkServerNamespace[1], false), "/TransactionRecovery");
 					if (!lock.acquire(800, TimeUnit.MILLISECONDS)) { // n秒内没有获取到锁, 就放弃
 						logger.info("concurrent execution, exit.");
