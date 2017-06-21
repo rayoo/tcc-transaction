@@ -29,7 +29,7 @@
     
     <bean id="configurableIdempotentAspect" class="com.yonyou.tcctransaction.idempotent.ConfigurableIdempotentAspect"
           init-method="init">
-        <property name="jdbcXidRepository" ref="jdbcXidRepository"/>
+        <property name="xidRepository" ref="jdbcXidRepository"/>
     </bean>
     <!-- 幂等性切面 end -->
     

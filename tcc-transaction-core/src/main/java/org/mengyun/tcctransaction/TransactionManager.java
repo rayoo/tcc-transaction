@@ -17,10 +17,16 @@ public class TransactionManager {
 
 	private TransactionRepository transactionRepository;
 
+	private XidRepository xidRepository;
+
 	private static final ThreadLocal<Deque<Transaction>> CURRENT = new ThreadLocal<Deque<Transaction>>();
 
 	public void setTransactionRepository(TransactionRepository transactionRepository) {
 		this.transactionRepository = transactionRepository;
+	}
+
+	public void setXidRepository(XidRepository xidRepository) {
+		this.xidRepository = xidRepository;
 	}
 
 	public Transaction begin() {
@@ -63,6 +69,8 @@ public class TransactionManager {
 		try {
 			transaction.commit();
 			transactionRepository.delete(transaction);
+
+			xidRepository.deleteXid(transaction);
 		} catch (Throwable commitException) {
 			logger.error("compensable transaction confirm failed.", commitException);
 			throw new ConfirmingException(commitException);
@@ -91,6 +99,7 @@ public class TransactionManager {
 		try {
 			transaction.rollback();
 			transactionRepository.delete(transaction);
+			xidRepository.deleteXid(transaction);
 		} catch (Throwable rollbackException) {
 			logger.error("compensable transaction rollback failed.", rollbackException);
 			throw new CancellingException(rollbackException);

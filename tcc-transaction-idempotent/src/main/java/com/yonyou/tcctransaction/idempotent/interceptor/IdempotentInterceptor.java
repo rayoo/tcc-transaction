@@ -9,7 +9,7 @@ import org.mengyun.tcctransaction.api.TransactionStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.yonyou.tcctransaction.idempotent.repository.JdbcXidRepository;
+import com.yonyou.tcctransaction.idempotent.XidRepository;
 
 /**
  * @author rayoo
@@ -18,10 +18,10 @@ public class IdempotentInterceptor {
 
 	static final Logger logger = LoggerFactory.getLogger(IdempotentInterceptor.class.getSimpleName());
 
-	private JdbcXidRepository jdbcXidRepository;
+	private XidRepository xidRepository;
 
-	public void setJdbcXidRepository(JdbcXidRepository jdbcXidRepository) {
-		this.jdbcXidRepository = jdbcXidRepository;
+	public void setXidRepository(XidRepository xidRepository) {
+		this.xidRepository = xidRepository;
 	}
 
 	public Object interceptIdempotentMethod(ProceedingJoinPoint pjp) throws Throwable {
@@ -43,7 +43,7 @@ public class IdempotentInterceptor {
 			return pjp.proceed();
 		}
 
-		int xidRet = jdbcXidRepository.createXid(transactionContext, method.getName());
+		int xidRet = xidRepository.createXid(transactionContext, method.getName());
 		if (xidRet == -1) {
 			logger.error("repetitive execution, method:{}, transactionStatus:{}", method.getName(), transactionStatus.toString());
 			return null;

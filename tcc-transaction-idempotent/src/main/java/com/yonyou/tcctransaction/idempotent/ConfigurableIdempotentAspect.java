@@ -7,7 +7,6 @@ import org.springframework.core.Ordered;
 
 import com.yonyou.tcctransaction.idempotent.interceptor.IdempotentAspect;
 import com.yonyou.tcctransaction.idempotent.interceptor.IdempotentInterceptor;
-import com.yonyou.tcctransaction.idempotent.repository.JdbcXidRepository;
 
 /**
  * @author rayoo
@@ -16,13 +15,13 @@ import com.yonyou.tcctransaction.idempotent.repository.JdbcXidRepository;
 public class ConfigurableIdempotentAspect extends IdempotentAspect implements Ordered {
 	private Logger logger = LoggerFactory.getLogger(ConfigurableIdempotentAspect.class);
 
-	private JdbcXidRepository jdbcXidRepository;
+	private XidRepository xidRepository;
 
 	public void init() {
 		logger.info("initialize idempotent aspect...");
 		IdempotentInterceptor idempotentTransactionInterceptor = new IdempotentInterceptor();
 
-		idempotentTransactionInterceptor.setJdbcXidRepository(jdbcXidRepository);
+		idempotentTransactionInterceptor.setXidRepository(xidRepository);
 
 		this.setIdempotentInterceptor(idempotentTransactionInterceptor);
 	}
@@ -32,8 +31,8 @@ public class ConfigurableIdempotentAspect extends IdempotentAspect implements Or
 		return Ordered.LOWEST_PRECEDENCE;
 	}
 
-	public void setJdbcXidRepository(JdbcXidRepository jdbcXidRepository) {
-		this.jdbcXidRepository = jdbcXidRepository;
+	public void setXidRepository(XidRepository xidRepository) {
+		this.xidRepository = xidRepository;
 	}
 
 }

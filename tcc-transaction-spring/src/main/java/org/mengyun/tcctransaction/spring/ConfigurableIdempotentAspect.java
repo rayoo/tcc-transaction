@@ -1,9 +1,9 @@
 package org.mengyun.tcctransaction.spring;
 
 import org.aspectj.lang.annotation.Aspect;
+import org.mengyun.tcctransaction.XidRepository;
 import org.mengyun.tcctransaction.interceptor.IdempotentAspect;
 import org.mengyun.tcctransaction.interceptor.IdempotentInterceptor;
-import org.mengyun.tcctransaction.repository.JdbcXidRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -15,13 +15,13 @@ import org.springframework.core.Ordered;
 public class ConfigurableIdempotentAspect extends IdempotentAspect implements Ordered {
 	private Logger logger = LoggerFactory.getLogger(ConfigurableIdempotentAspect.class);
 
-	private JdbcXidRepository jdbcXidRepository;
+	private XidRepository xidRepository;
 
 	public void init() {
 		logger.info("initialize idempotent aspect...");
 		IdempotentInterceptor idempotentTransactionInterceptor = new IdempotentInterceptor();
 
-		idempotentTransactionInterceptor.setJdbcXidRepository(jdbcXidRepository);
+		idempotentTransactionInterceptor.setXidRepository(xidRepository);
 
 		this.setIdempotentInterceptor(idempotentTransactionInterceptor);
 	}
@@ -31,8 +31,8 @@ public class ConfigurableIdempotentAspect extends IdempotentAspect implements Or
 		return Ordered.LOWEST_PRECEDENCE;
 	}
 
-	public void setJdbcXidRepository(JdbcXidRepository jdbcXidRepository) {
-		this.jdbcXidRepository = jdbcXidRepository;
+	public void setXidRepository(XidRepository xidRepository) {
+		this.xidRepository = xidRepository;
 	}
 
 }

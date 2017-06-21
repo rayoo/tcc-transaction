@@ -37,7 +37,7 @@ public class UserCreditServiceImpl implements UserCreditService {
 		logger.info(">> confirmDelUserCredit {}", transactionContext);
 		UserCredit userCredit = userCreditDao.findByUserId(userId);
 		if (null != userCredit && userCredit.getDr() == 1) {
-			int i = 1 / 0;
+			// int i = 1 / 0;
 			userCreditDao.delete(userId);
 		}
 	}

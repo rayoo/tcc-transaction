@@ -6,13 +6,19 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.sql.DataSource;
+import javax.transaction.xa.Xid;
 
 import org.mengyun.tcctransaction.api.TransactionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.yonyou.tcctransaction.idempotent.XidRepository;
 
 /**
  * @author rayoo
  */
-public class JdbcXidRepository {
+public class JdbcXidRepository implements XidRepository {
+	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcXidRepository.class);
 
 	private String domain;
 
@@ -107,6 +113,42 @@ public class JdbcXidRepository {
 			if ("23000".equals(e.getSQLState())) { // Duplicate Unique key
 				return -1;
 			}
+			throw new TransactionIOException(e);
+		} finally {
+			closeStatement(stmt);
+			this.releaseConnection(connection);
+		}
+	}
+
+	public int deleteXid(Xid xid, Integer transactionType) {
+		if (null == xid || null == transactionType) {
+			String err = new StringBuilder("Xid:").append(xid).append(" 或 TransactionType为空:").append(transactionType).toString();
+			LOGGER.error("{}", err);
+			throw new RuntimeException(err);
+		}
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		try {
+			connection = this.getConnection();
+			// connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/TCC?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true", "root", "root");
+
+			StringBuilder builder = new StringBuilder("delete from ");
+			builder.append(getTableName()).append(" where gtxid=? ");
+
+			if (2 == transactionType) {
+				builder.append(" and btxid=? ");
+			}
+
+			stmt = connection.prepareStatement(builder.toString());
+
+			stmt.setBytes(1, xid.getGlobalTransactionId());
+
+			if (2 == transactionType) {
+				stmt.setBytes(2, xid.getBranchQualifier());
+			}
+
+			return stmt.executeUpdate();
+		} catch (SQLException e) {
 			throw new TransactionIOException(e);
 		} finally {
 			closeStatement(stmt);

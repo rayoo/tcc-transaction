@@ -110,13 +110,14 @@ public class TransactionRecovery {
 								transactionConfigurator.getTransactionRepository().update(transaction);
 								transaction.commit();
 								transactionConfigurator.getTransactionRepository().delete(transaction);
-
+								transactionConfigurator.getXidRepository().deleteXid(transaction);
 							} else if (transaction.getStatus().equals(TransactionStatus.CANCELLING) || transaction.getTransactionType().equals(TransactionType.ROOT)) {
 
 								transaction.changeStatus(TransactionStatus.CANCELLING);
 								transactionConfigurator.getTransactionRepository().update(transaction);
 								transaction.rollback();
 								transactionConfigurator.getTransactionRepository().delete(transaction);
+								transactionConfigurator.getXidRepository().deleteXid(transaction);
 							}
 
 						} catch (Throwable throwable) {

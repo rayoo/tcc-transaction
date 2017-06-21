@@ -6,7 +6,7 @@ import org.mengyun.tcctransaction.repository.JdbcXidRepository;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 
 /**
- * Created by changmingxie on 10/30/15.
+ * @author rayoo
  */
 public class SpringJdbcXidRepository extends JdbcXidRepository {
 

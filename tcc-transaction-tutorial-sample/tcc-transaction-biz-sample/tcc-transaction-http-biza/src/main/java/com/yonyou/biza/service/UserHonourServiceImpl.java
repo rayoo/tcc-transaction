@@ -37,7 +37,7 @@ public class UserHonourServiceImpl implements UserHonourService {
 	@Transactional
 	public void confirmDelUserHonour(TransactionContext transactionContext, long userId) {
 		logger.info(">> confirmDelUserHonour {}", transactionContext);
-		int i = 1 / 0;
+		// int i = 1 / 0;
 		UserHonour userHonour = userHonourDao.findByUserId(userId);
 		if (null != userHonour && userHonour.getDr() == 1) {
 			userHonourDao.delete(userId);

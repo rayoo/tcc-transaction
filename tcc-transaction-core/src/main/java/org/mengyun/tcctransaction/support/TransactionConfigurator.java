@@ -2,6 +2,7 @@ package org.mengyun.tcctransaction.support;
 
 import org.mengyun.tcctransaction.TransactionManager;
 import org.mengyun.tcctransaction.TransactionRepository;
+import org.mengyun.tcctransaction.XidRepository;
 import org.mengyun.tcctransaction.recover.RecoverConfig;
 
 /**
@@ -9,9 +10,11 @@ import org.mengyun.tcctransaction.recover.RecoverConfig;
  */
 public interface TransactionConfigurator {
 
-    TransactionManager getTransactionManager();
+	TransactionManager getTransactionManager();
 
-    TransactionRepository getTransactionRepository();
+	TransactionRepository getTransactionRepository();
 
-    RecoverConfig getRecoverConfig();
+	RecoverConfig getRecoverConfig();
+
+	XidRepository getXidRepository();
 }

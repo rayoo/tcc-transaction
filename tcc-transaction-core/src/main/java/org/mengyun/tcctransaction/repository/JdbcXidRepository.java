@@ -4,16 +4,27 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
+import org.apache.curator.shaded.com.google.common.collect.Sets;
+import org.mengyun.tcctransaction.Participant;
+import org.mengyun.tcctransaction.Transaction;
+import org.mengyun.tcctransaction.XidRepository;
 import org.mengyun.tcctransaction.api.TransactionContext;
+import org.mengyun.tcctransaction.common.TransactionType;
 import org.mengyun.tcctransaction.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.alibaba.fastjson.JSON;
 
 /**
- * Created by changmingxie on 10/30/15.
+ * @author rayoo
  */
-public class JdbcXidRepository {
+public class JdbcXidRepository implements XidRepository {
+	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcXidRepository.class);
 
 	private String domain;
 
@@ -78,7 +89,6 @@ public class JdbcXidRepository {
 	}
 
 	public int createXid(TransactionContext tctx, String methodName) {
-
 		Connection connection = null;
 		PreparedStatement stmt = null;
 
@@ -113,6 +123,59 @@ public class JdbcXidRepository {
 			closeStatement(stmt);
 			this.releaseConnection(connection);
 		}
+	}
+
+	@Override
+	public int deleteXid(Transaction transaction) {
+		Connection connection = null;
+		PreparedStatement stmt = null;
+		try {
+			connection = this.getConnection();
+			// connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/TCC?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true", "root", "root");
+
+			StringBuilder builder = new StringBuilder("delete from ");
+			builder.append(getTableName()).append(" where gtxid=? ");
+
+			Set<byte[]> btxids = Sets.newHashSet();
+
+			if (TransactionType.BRANCH == transaction.getTransactionType()) {
+				builder.append(" and (btxid=? OR ");
+				for (Participant participant : transaction.getParticipants()) {
+					builder.append("btxid=? OR ");
+					btxids.add(participant.getXid().getBranchQualifier());
+				}
+				builder.setLength(builder.length() - 4);
+				builder.append(")");
+			}
+
+			String sql = builder.toString();
+			stmt = connection.prepareStatement(sql);
+
+			stmt.setBytes(1, transaction.getXid().getGlobalTransactionId());
+
+			if (TransactionType.BRANCH == transaction.getTransactionType()) {
+				int idx = 2;
+				stmt.setBytes(idx++, transaction.getXid().getBranchQualifier());
+				for (byte[] btxid : btxids) {
+					stmt.setBytes(idx++, btxid);
+				}
+			}
+
+			int ret = stmt.executeUpdate();
+			LOGGER.info("delete idempotent records:{}, sql:{} transaction:{}", ret, sql, JSON.toJSON(transaction));
+			return ret;
+		} catch (SQLException e) {
+			throw new TransactionIOException(e);
+		} finally {
+			closeStatement(stmt);
+			this.releaseConnection(connection);
+		}
+	}
+
+	public static void main(String[] args) {
+		StringBuilder sb = new StringBuilder("and (btxid=? OR ");
+		sb.setLength(sb.length() - 4);
+		System.out.println(sb);
 	}
 
 }
