@@ -1,4 +1,3 @@
-[#ftl ]
 
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -8,9 +7,13 @@
 </head>
 <body>
 <div class="page">
-    <a href="del/user/1">
-        	删除
-    </a>
+	列表:
+	<hr/>
+	<#list userLst?sort_by("userId") as item>
+		<b>${item.userName}</b> &nbsp; <a href="del/user/${item.userId}">删除</a><br/>
+	</#list>
+	<hr/>
+	共${userLst?size}条<br/>
 </div>
 </body>
 </html>

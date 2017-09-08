@@ -1,5 +1,7 @@
 package com.yonyou.biz.service;
 
+import java.util.List;
+
 import org.mengyun.tcctransaction.api.Compensable;
 import org.mengyun.tcctransaction.api.Idempotent;
 import org.mengyun.tcctransaction.api.TransactionContext;
@@ -62,6 +64,10 @@ public class UserService {
 
 	public UserInfo findByUserId(long userId) {
 		return userInfoDao.findByUserId(userId);
+	}
+
+	public List<UserInfo> findAll() {
+		return userInfoDao.findAll();
 	}
 
 	// @Compensable

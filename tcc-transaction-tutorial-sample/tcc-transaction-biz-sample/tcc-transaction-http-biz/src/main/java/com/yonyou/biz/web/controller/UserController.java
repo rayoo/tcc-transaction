@@ -1,5 +1,7 @@
 package com.yonyou.biz.web.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +25,11 @@ public class UserController {
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public ModelAndView index() {
 		ModelAndView mv = new ModelAndView("/index");
+
+		List<UserInfo> lst = userService.findAll();
+
+		mv.addObject("userLst", lst);
+
 		return mv;
 	}
 

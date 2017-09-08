@@ -59,11 +59,11 @@ public class CompensableTransactionInterceptor {
 		MethodType methodType = CompensableMethodUtils.calculateMethodType(propagation, isTransactionActive, transactionContext);
 		logger.info("intercept compensable, class:{}, method:{}", pjp.getTarget().getClass().getName(), method.getName() + " " + methodType.toString());
 		switch (methodType) {
-		case ROOT:
+		case ROOT: // 调用方-根事务情况(执行过程中会级联执行非代理嵌套事务confirm/cancel情况 > transactionManager.commit())
 			return rootMethodProceed(pjp);
-		case PROVIDER:
+		case PROVIDER: // 被调用方-嵌套分支事务情况
 			return providerMethodProceed(pjp, transactionContext);
-		default:
+		default: // 调用方-代理分支事务情况 及 非代理try阶段情况
 			return pjp.proceed();
 		}
 	}
