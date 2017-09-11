@@ -20,7 +20,7 @@
     </modules>
 
     <properties>
-        <springframework.version>3.2.12.RELEASE</springframework.version>
+        <springframework.version>4.3.8.RELEASE</springframework.version>
 
         <java.src.version>1.6</java.src.version>
         <java.target.version>1.6</java.target.version>
@@ -54,7 +54,7 @@
             <dependency>
                 <groupId>org.quartz-scheduler</groupId>
                 <artifactId>quartz</artifactId>
-                <version>1.8.6</version>
+                <version>2.3.0</version>
                 <exclusions>
                     <exclusion>
                         <groupId>c3p0</groupId>
@@ -81,6 +81,12 @@
                 <artifactId>c3p0</artifactId>
                 <version>0.9.5-pre10</version>
             </dependency>
+            
+            <dependency>
+			    <groupId>org.apache.tomcat</groupId>
+			    <artifactId>tomcat-jdbc</artifactId>
+			    <version>8.0.46</version>
+			</dependency>
 
             <dependency>
                 <groupId>mysql</groupId>

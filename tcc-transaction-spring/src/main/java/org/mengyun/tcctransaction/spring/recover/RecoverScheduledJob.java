@@ -4,7 +4,7 @@ import org.mengyun.tcctransaction.SystemException;
 import org.mengyun.tcctransaction.recover.TransactionRecovery;
 import org.mengyun.tcctransaction.support.TransactionConfigurator;
 import org.quartz.Scheduler;
-import org.springframework.scheduling.quartz.CronTriggerBean;
+import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean;
 
 /**
@@ -12,50 +12,53 @@ import org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean;
  */
 public class RecoverScheduledJob {
 
-    private TransactionRecovery transactionRecovery;
+	private TransactionRecovery transactionRecovery;
 
-    private TransactionConfigurator transactionConfigurator;
+	private TransactionConfigurator transactionConfigurator;
 
-    private Scheduler scheduler;
+	private Scheduler scheduler;
 
-    public void init() {
+	public void init() {
 
-        try {
-            MethodInvokingJobDetailFactoryBean jobDetail = new MethodInvokingJobDetailFactoryBean();
-            jobDetail.setTargetObject(transactionRecovery);
-            jobDetail.setTargetMethod("startRecover");
-            jobDetail.setName("transactionRecoveryJob");
-            jobDetail.setConcurrent(false);
-            jobDetail.afterPropertiesSet();
+		try {
+			MethodInvokingJobDetailFactoryBean jobDetail = new MethodInvokingJobDetailFactoryBean();
+			jobDetail.setTargetObject(transactionRecovery);
+			jobDetail.setTargetMethod("startRecover");
+			jobDetail.setName("transactionRecoveryJob");
+			jobDetail.setConcurrent(false);
+			jobDetail.afterPropertiesSet();
 
-            CronTriggerBean cronTrigger = new CronTriggerBean();
-            cronTrigger.setBeanName("transactionRecoveryCronTrigger");
+			// CronTriggerBean cronTrigger = new CronTriggerBean(); // for spring3.x
+			CronTriggerFactoryBean cronTrigger = new CronTriggerFactoryBean(); // for spring4.x
 
-            cronTrigger.setCronExpression(transactionConfigurator.getRecoverConfig().getCronExpression());
-            cronTrigger.afterPropertiesSet();
+			cronTrigger.setBeanName("transactionRecoveryCronTrigger");
 
-            scheduler.scheduleJob(jobDetail.getObject(), cronTrigger);
+			cronTrigger.setCronExpression(transactionConfigurator.getRecoverConfig().getCronExpression());
+			cronTrigger.afterPropertiesSet();
 
-            scheduler.start();
+			// scheduler.scheduleJob(jobDetail.getObject(), cronTrigger); // for spring3.x
+			scheduler.scheduleJob(jobDetail.getObject(), cronTrigger.getObject()); // for spring4.x
 
-        } catch (Exception e) {
-            throw new SystemException(e);
-        }
-    }
+			scheduler.start();
 
-    public void setTransactionRecovery(TransactionRecovery transactionRecovery) {
-        this.transactionRecovery = transactionRecovery;
-    }
+		} catch (Exception e) {
+			throw new SystemException(e);
+		}
+	}
 
-    public Scheduler getScheduler() {
-        return scheduler;
-    }
+	public void setTransactionRecovery(TransactionRecovery transactionRecovery) {
+		this.transactionRecovery = transactionRecovery;
+	}
 
-    public void setScheduler(Scheduler scheduler) {
-        this.scheduler = scheduler;
-    }
+	public Scheduler getScheduler() {
+		return scheduler;
+	}
 
-    public void setTransactionConfigurator(TransactionConfigurator transactionConfigurator) {
-        this.transactionConfigurator = transactionConfigurator;
-    }
+	public void setScheduler(Scheduler scheduler) {
+		this.scheduler = scheduler;
+	}
+
+	public void setTransactionConfigurator(TransactionConfigurator transactionConfigurator) {
+		this.transactionConfigurator = transactionConfigurator;
+	}
 }
