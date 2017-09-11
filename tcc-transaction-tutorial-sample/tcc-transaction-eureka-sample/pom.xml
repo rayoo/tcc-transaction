@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="eureka://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="eureka://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="eureka://maven.apache.org/POM/4.0.0 eureka://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>tcc-transaction-tutorial-sample</artifactId>
+        <groupId>org.mengyun</groupId>
+        <version>1.2.3.1</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>tcc-transaction-eureka-sample</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>tcc-transaction-eureka-biza</module>
+        <module>tcc-transaction-eureka-biza-api</module>
+        <module>tcc-transaction-eureka-biz</module>
+        <module>tcc-transaction-eureka-bizb</module>
+        <module>tcc-transaction-eureka-bizb-api</module>
+    </modules>
+
+</project>

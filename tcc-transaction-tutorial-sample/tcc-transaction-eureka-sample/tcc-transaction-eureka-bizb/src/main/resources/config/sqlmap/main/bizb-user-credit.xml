@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yonyou.bizb.dao.UserCreditDao">
+
+    <resultMap id="result" type="com.yonyou.bizb.entity.UserCredit">
+        <id property="userId" javaType="java.lang.Long" column="user_id"/>
+        <result property="creditCount" column="credit_count"/>
+        <result property="dr" column="dr"/>
+    </resultMap>
+
+    <sql id="sql_select">
+        SELECT
+        user_id,
+        credit_count,
+        dr
+        FROM
+        user_credit
+    </sql>
+
+
+    <select id="findAll" resultMap="result">
+        <include refid="sql_select"/>
+    </select>
+
+    <select id="findByUserId" resultMap="result">
+        <include refid="sql_select"/>
+        WHERE USER_ID = #{id,javaType=java.lang.Long,jdbcType=BIGINT}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO user_credit
+        (
+        credit_count,
+        user_id
+        )
+        VALUES
+            (
+            #{creditCount},
+            #{userId}
+            )
+    </insert>
+
+    <update id="update" parameterType="com.yonyou.bizb.entity.UserCredit">
+        UPDATE
+        user_credit
+        SET
+        dr = #{dr}
+        WHERE user_id = #{userId}
+    </update>
+    
+    <delete id="delete" parameterType="java.lang.Long">
+    	delete from user_credit where user_id=#{user_id}
+    </delete>
+</mapper>
